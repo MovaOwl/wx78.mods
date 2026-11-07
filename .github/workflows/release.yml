@@ -1,0 +1,47 @@
+# Публикует релиз мода wx1102, когда в репозиторий пушат тег версии (например, v0.1.0).
+# Архив содержит только папку wx1102 — её и нужно класть в папку mods игры.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that modinfo version matches the tag
+        run: |
+          MOD_VERSION=$(grep -oP '^version\s*=\s*"\K[^"]+' wx1102/modinfo.lua)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "modinfo: $MOD_VERSION, tag: $TAG_VERSION"
+          if [ "$MOD_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::version in wx1102/modinfo.lua ($MOD_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+      - name: Check Lua syntax
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lua5.1
+          for f in wx1102/*.lua wx1102/main/*.lua; do luac5.1 -p "$f"; done
+
+      - name: Build archive
+        run: zip -r "wx1102-${GITHUB_REF_NAME}.zip" wx1102
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="release-notes/${GITHUB_REF_NAME}.md"
+          if [ ! -f "$NOTES" ]; then
+            echo "Релиз ${GITHUB_REF_NAME}" > "$NOTES"
+          fi
+          gh release create "$GITHUB_REF_NAME" "wx1102-${GITHUB_REF_NAME}.zip" \
+            --title "wx1102 ${GITHUB_REF_NAME}" \
+            --notes-file "$NOTES"
