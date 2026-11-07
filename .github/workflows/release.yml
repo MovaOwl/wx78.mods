@@ -1,4 +1,6 @@
-# Публикует релиз мода wx1102, когда в репозиторий пушат тег версии (например, v0.1.0).
+# Публикует релиз мода wx1102. Два способа запуска:
+#   * пуш тега версии (например, v0.1.0);
+#   * вручную: вкладка Actions -> Release -> Run workflow (тег создастся сам).
 # Архив содержит только папку wx1102 — её и нужно класть в папку mods игры.
 name: Release
 
@@ -6,6 +8,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Версия без буквы v, например 0.1.0 (по умолчанию — из modinfo.lua)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -16,15 +24,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check that modinfo version matches the tag
+      - name: Work out the tag and check it matches modinfo.lua
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           MOD_VERSION=$(grep -oP '^version\s*=\s*"\K[^"]+' wx1102/modinfo.lua)
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          echo "modinfo: $MOD_VERSION, tag: $TAG_VERSION"
-          if [ "$MOD_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::version in wx1102/modinfo.lua ($MOD_VERSION) does not match tag ($TAG_VERSION)"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            TAG="$GITHUB_REF_NAME"
+          elif [ -n "$INPUT_VERSION" ]; then
+            TAG="v${INPUT_VERSION#v}"
+          else
+            TAG="v$MOD_VERSION"
+          fi
+          echo "modinfo: $MOD_VERSION, tag: $TAG"
+          if [ "$MOD_VERSION" != "${TAG#v}" ]; then
+            echo "::error::version in wx1102/modinfo.lua ($MOD_VERSION) does not match tag ($TAG)"
             exit 1
           fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Check Lua syntax
         run: |
@@ -32,16 +49,18 @@ jobs:
           for f in wx1102/*.lua wx1102/main/*.lua; do luac5.1 -p "$f"; done
 
       - name: Build archive
-        run: zip -r "wx1102-${GITHUB_REF_NAME}.zip" wx1102
+        run: zip -r "wx1102-${TAG}.zip" wx1102
 
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES="release-notes/${GITHUB_REF_NAME}.md"
+          NOTES="release-notes/${TAG}.md"
           if [ ! -f "$NOTES" ]; then
-            echo "Релиз ${GITHUB_REF_NAME}" > "$NOTES"
+            echo "Релиз ${TAG}" > "$NOTES"
           fi
-          gh release create "$GITHUB_REF_NAME" "wx1102-${GITHUB_REF_NAME}.zip" \
-            --title "wx1102 ${GITHUB_REF_NAME}" \
+          # --target: если тега ещё нет, GitHub создаст его на этом коммите.
+          gh release create "$TAG" "wx1102-${TAG}.zip" \
+            --target "$GITHUB_SHA" \
+            --title "wx1102 ${TAG}" \
             --notes-file "$NOTES"
