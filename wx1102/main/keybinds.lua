@@ -4,7 +4,7 @@
 --     так же, как это делает игра (actions.lua, USESPELLBOOK.pre_action_cb).
 
 local GLOBAL = GLOBAL
-local WX1102 = GLOBAL.WX1102
+local WX1102 = WX1102 -- общая таблица мода из modmain.lua (окружение мода)
 local cfg = WX1102.config
 
 if GLOBAL.TheNet:IsDedicated() then

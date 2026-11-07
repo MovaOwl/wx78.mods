@@ -19,7 +19,7 @@
 local GLOBAL = GLOBAL
 local ACTIONS = GLOBAL.ACTIONS
 local TheWorld_ismastersim = function() return GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim end
-local WX1102 = GLOBAL.WX1102
+local WX1102 = WX1102 -- общая таблица мода из modmain.lua (окружение мода)
 local cfg = WX1102.config
 
 local function CanHop(inst)

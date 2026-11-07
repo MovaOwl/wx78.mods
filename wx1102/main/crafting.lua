@@ -18,7 +18,7 @@
 
 local GLOBAL = GLOBAL
 local TechTree = GLOBAL.require("techtree")
-local WX1102 = GLOBAL.WX1102
+local WX1102 = WX1102 -- общая таблица мода из modmain.lua (окружение мода)
 local cfg = WX1102.config
 
 -- Чем выше 9, тем это чертёж или ивент без станции — не открываем.
