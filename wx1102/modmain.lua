@@ -34,12 +34,9 @@ function WX1102.IsWX(inst)
     return inst ~= nil and inst.prefab == "wx78" and inst:HasTag(WX1102.TAG)
 end
 
--- Анимация прыжка лежит в ассетах Вортокса. Подключаем её сами, чтобы прыжок
--- выглядел правильно, даже если на сервере нет Вортокса.
-Assets =
-{
-    Asset("ANIM", "anim/wortox_portal.zip"),
-}
+-- Анимация прыжка (anim/wortox_portal.zip) входит в ассеты Вортокса, а игра загружает
+-- ассеты всех персонажей. Отдельно её не подключаем.
+Assets = {}
 
 PrefabFiles = {}
 

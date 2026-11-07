@@ -6,7 +6,7 @@ description = [[WX-78 получает:
 
 Всё работает только для WX-78. Остальные персонажи играют как обычно.]]
 author = "MovaOwl"
-version = "0.1.0"
+version = "0.1.1"
 
 api_version = 10
 dst_compatible = true
